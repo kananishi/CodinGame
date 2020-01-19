@@ -25,16 +25,20 @@ final class Human extends Character{
 	}
 
 	public boolean canBeSaved() {
-		return stepsFromAsh() <= stepsFromNearesZombie();
+		return Double.compare(stepsFromAsh(),stepsFromNearesZombie()) <= 0;
 	}
 
 	private double stepsFromAsh() {
-		return getDistanceToAsh()/ Rules.ASHSTEP.getValue() ;
+		return (getDistanceToAsh() - Rules.ASHRANGE.getValue()) / Rules.ASHSTEP.getValue() ;
 	}
 
 	private double stepsFromNearesZombie() {
 		return getDistanceToNearestZombie() / Rules.ZOMBIESSTEP.getValue();
 	}
 
+	@Override
+	public String toString() {
+		return "Id: " + getId() + "Position: " + getCurrentPosition();
+	}
 
 }

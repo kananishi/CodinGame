@@ -71,5 +71,4 @@ final class Game{
 	public static List<Zombie> getZombies() {
 		return zombies;
 	}
-
 }

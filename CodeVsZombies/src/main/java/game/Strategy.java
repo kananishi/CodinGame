@@ -8,7 +8,7 @@ enum Strategy{
 	SaveNearestHuman {
 		@Override
 		public Position run() {
-			final Optional<Human> nearestHuman = humans.stream()
+			final Optional<Human> nearestHuman = Game.getHumans().stream()
 					.min((first, second) -> Double.compare(first.getDistanceToAsh(),second.getDistanceToAsh()));
 			if(nearestHuman.isPresent()) {
 				return nearestHuman.get().getCurrentPosition();
@@ -19,21 +19,30 @@ enum Strategy{
 	SaveOnlyWhoCanBeSaved{
 		@Override
 		public Position run() {
-			final Optional<Human> nearestHuman = humans.stream()
-					.filter(human -> human.canBeSaved())
-					.collect(toList())
-					.stream()
+			final Optional<Human> nearestHuman = getRescueableHumans().stream()
 					.min((first, second) -> Double.compare(first.getDistanceToAsh(), second.getDistanceToAsh()));
-			if(nearestHuman.isPresent()) {
-				return nearestHuman.get().getCurrentPosition();
+			if(!nearestHuman.isPresent()) {
+				Game.log("Save nearest human");
+				return SaveNearestHuman.run();
 			}
-			return null;
+			return nearestHuman.get().getCurrentPosition();
 		}
-	}
-	;
+	},
+	SaveHumansInDanger{
+		@Override
+		public Position run() {
+			final List<Human> rescuableHumans = getRescueableHumans();
+			rescuableHumans.sort((first,second) -> (int)(first.getDistanceToAsh() - second.getDistanceToAsh()));
+			rescuableHumans.forEach(h -> Game.log(String.valueOf(h.getDistanceToAsh())));
+			return rescuableHumans.get(rescuableHumans.size()-1).getCurrentPosition();
+		}
+	};
 
-	private static List<Human> humans = Game.getHumans();
+	public static List<Human> getRescueableHumans() {
+		return Game.getHumans().stream()
+				.filter(human -> human.canBeSaved())
+				.collect(toList());
+	}
 
 	public abstract Position run();
-
 }
