@@ -4,46 +4,12 @@ import java.math.*;
 import static java.util.stream.Collectors.toList;
 class Building {
 
-	private boolean owner;	//0: Owned 1: Enemy
-	private String type;	// 0:HQ
-	private Position coordenates;
-	
-	private Building(Position coordenates, String type, boolean owner) {
-		this.coordenates = coordenates;
-		this.type = type;
-		this.owner = owner;
-	}
-	
-	public static Building create(Position coordenates, String type, boolean owner) {
-		return new Building(coordenates, type, owner);
-	}
-	
-	static class Builder{
-		private boolean owner = false;	//true: Owned false: Enemy
-		private String type = "";
-		private Position coordenates = null;
-		public Builder(){
-		}
-		public Builder owner(int value){
-			this.owner = value == 1 ? true : false; 
-			return this;
-		}
-		public Builder type(int value){
-			this.type = value == 0 ? "HQ" : "";
-			return this;
-		}
-		public Builder coordenates(Position value){
-			this.coordenates = value;
-			return this;
-		}
-		
-		Building build() {
-			return new Building(this.coordenates, this.type, this.owner);
-		}
-	}
-	
+	private final boolean owned; // 0: Owned 1: Enemy
+	private final String type; // 0:HQ
+	private final Position coordenates;
+
 	public boolean isOwn() {
-		return owner;
+		return owned;
 	}
 
 	public String getType() {
@@ -53,107 +19,308 @@ class Building {
 	public Position getCoordenates() {
 		return coordenates;
 	}
-	
+
+	public static Building create(final Position coordenates, final String type, final boolean owner) {
+		return new Building(coordenates, type, owner);
+	}
+
+	public Building(final Position coordenates, final String type, final boolean owner) {
+		this.coordenates = coordenates;
+		this.type = type;
+		this.owned = owner;
+	}
+
+	private Building(final Builder builder) {
+		coordenates = builder.coordenates;
+		type = builder.type;
+		owned = builder.owned;
+	}
+
+	public static class Builder {
+		private boolean owned = false; // true: Owned false: Enemy
+		private String type = "";
+		private Position coordenates = null;
+
+		public Builder() {
+		}
+
+		public Builder owner(final int value) {
+			owned = value == 0 ? true : false;
+			return this;
+		}
+
+		public Builder type(final int value) {
+			type = value == 0 ? "HQ" : "";
+			return this;
+		}
+
+		public Builder coordenates(final Position value) {
+			coordenates = value;
+			return this;
+		}
+
+		Building build() {
+			return new Building(this);
+		}
+	}
 }
 
 
-final class Game{
+
+final class Game implements Output {
+
+	public static Game GAME = new Game();
+
+	private HeadQuarters ownHeadQuarters;
+	private HeadQuarters opponentHeadQuarters;
+
+	private int numberMineSpots;
+	private final List<Position> mineSpots = new ArrayList<>();
+
+	private final Map map = new Map();
+
+	private int buildingCount;
+	private final List<Building> buildings = new ArrayList<>();
 
 	private Game() {
 	}
-	
-	protected static void run() {
-		setParameters();
-		exec(Strategy.Default.run());
+
+	HeadQuarters getOwnHeadQuarters() {
+		return ownHeadQuarters;
 	}
 
-	final static Scanner input = new Scanner(System.in);
-
-	private static int numberMineSpots;
-	private static List<Position> mineSpots = new ArrayList<>(numberMineSpots);
-	private static int gold;
-	private static int income;
-	private static int opponentGold;
-	private static int opponentIncome;
-	private static char[][] map = new char[Rules.MapWide.getValue()][Rules.MapHigh.getValue()];
-	private static int buildingCount;
-	private static List<Building> buildings = new ArrayList<>(buildingCount);
-	private static int unitCount;
-	private static List<Unit> allies = new ArrayList<>();
-	private static List<Unit> enimies = new ArrayList<>();
-
-	public static int getGold() {
-		return gold;
+	HeadQuarters getOpponentHeadQuarters() {
+		return opponentHeadQuarters;
 	}
-	
-	public static int getIncome() {
-		return income;
+
+	List<Position> getMineSpots() {
+		return mineSpots;
 	}
-	
-	public static char[][] getMap(){
+
+	Map getMap() {
 		return map;
 	}
-	
-	public static List<Building> getBuildings() {
+
+	List<Building> getBuildings() {
 		return buildings;
 	}
-	
-	public static List<Unit> getAllies() {
-		return allies;
-	}
-	
-	static void getMines() {
-		numberMineSpots = input.nextInt();
+
+	void setMines() {
+		numberMineSpots = InputHolder.input.nextInt();
 		for (int i = 0; i < numberMineSpots; i++) {
-			mineSpots.add(Position.create(input.nextInt(), input.nextInt()));
+			mineSpots.add(Position.create(InputHolder.input.nextInt(), InputHolder.input.nextInt()));
 		}
 	}
 
-	static void setParameters() {
-		gold = input.nextInt();
-        income = input.nextInt();
-        opponentGold = input.nextInt();
-        opponentIncome = input.nextInt();
-        
-        for (int i = 0; i < Rules.MapWide.getValue(); i++) {
-        	setMapOnLine(i, input.next());
-        }
-        
-        buildingCount = input.nextInt();
-        for (int i = 0; i < buildingCount; i++) {
-        	Building.Builder building = new Building.Builder();
-        	building.owner(input.nextInt());
-        	building.type(input.nextInt());
-        	building.coordenates(Position.create(input.nextInt(), input.nextInt()));
-        }
-        
-        unitCount = input.nextInt();
-        for (int i = 0; i < unitCount; i++) {
-            int owner = input.nextInt();
-            Unit unit = new Unit();
-            unit.setId(input.nextInt());
-            unit.setLevel(input.nextInt());
-            unit.setCoordenates(Position.create(input.nextInt(), input.nextInt()));
-            if(owner == Rules.AlliesUnits.getValue()) {
-            	allies.add(unit);
-            	return ;
-            }
-            enimies.add(unit);
-        }
+	void run() {
+		updateParameters();
+		exec(Strategy.TrainOneAndMoveToOpponentHQ.run());
 	}
-	
-	private static void setMapOnLine(int line, String lineInfo) {
-		for(int i = 0; i < Rules.MapWide.getValue(); i++) {
-			Game.log(lineInfo);
+
+	void updateParameters() {
+		final int gold = InputHolder.input.nextInt();
+		final int income = InputHolder.input.nextInt();
+		final int opponentGold = InputHolder.input.nextInt();
+		final int opponentIncome = InputHolder.input.nextInt();
+
+		for (int i = 0; i < Rules.MapWide.getValue(); i++) {
+			map.setMapOnLine(i, InputHolder.input.next());
+		}
+
+		createOrUpdateBuildings(InputHolder.input.nextInt());
+
+		createOrUpdateHeadQuarters(gold, income, opponentGold, opponentIncome);
+
+		createOrUpdateUnits(InputHolder.input.nextInt());
+	}
+
+	private void createOrUpdateBuildings(final int numberOfBuildings) {
+		for (int i = 0; i < numberOfBuildings; i++) {
+			final int owner = InputHolder.input.nextInt();
+			final int type = InputHolder.input.nextInt();
+			final Position coordenates = Position.create(InputHolder.input.nextInt(), InputHolder.input.nextInt());
+
+			final Optional<Building> possibleBuilding = buildings.stream()
+					.filter(b -> b.getCoordenates().equals(coordenates)).findFirst();
+
+			if (possibleBuilding.isPresent()) {
+				log("Building already exists");
+				continue;
+			}
+
+			final Building.Builder builder = new Building.Builder();
+			builder.owner(owner);
+			builder.type(type);
+			builder.coordenates(coordenates);
+			buildings.add(builder.build());
+		}
+	}
+
+	private void createOrUpdateHeadQuarters(final int gold, final int income, final int opponentGold,
+			final int opponentIncome) {
+		if (ownHeadQuarters == null) {
+			ownHeadQuarters = createHQ(true);
+		}
+		ownHeadQuarters.setGold(gold);
+		ownHeadQuarters.setIncome(income);
+
+		if (opponentHeadQuarters == null) {
+			opponentHeadQuarters = createHQ(false);
+		}
+		opponentHeadQuarters.setGold(opponentGold);
+		opponentHeadQuarters.setIncome(opponentGold);
+	}
+
+	/**
+	 * Cria um novo HQ recebe como parametro um booleano que diz se o HQ pertence ao
+	 * jogador(true) ou ao bot (false)
+	 */
+	private HeadQuarters createHQ(final boolean own) {
+		final List<Building> builds = buildings.stream().filter(b -> b.isOwn() == own).collect(toList());
+
+		final Optional<Building> possibleHQ = builds.stream().filter(b -> b.getType().contentEquals("HQ")).findFirst();
+		if (!possibleHQ.isPresent()) {
+			throw new IllegalArgumentException("Deve existir um HQ");
+		}
+		final Building building = possibleHQ.get();
+		log("Create hq isOwn: " + own);
+		log(building.getCoordenates());
+
+		return new HeadQuarters(building.getCoordenates(), builds);
+	}
+
+	private void createOrUpdateUnits(final int unitCount) {
+		for (int i = 0; i < unitCount; i++) {
+			final int owner = InputHolder.input.nextInt();
+			final int id = InputHolder.input.nextInt();
+			final int level = InputHolder.input.nextInt();
+			final Position position = Position.create(InputHolder.input.nextInt(), InputHolder.input.nextInt());
+			if (owner == Rules.AlliesUnits.getValue()) {
+				ownHeadQuarters.updateUnits(id, level, position);
+				continue;
+			}
+			opponentHeadQuarters.updateUnits(id, level, position);
+		}
+	}
+}
+
+
+final class HeadQuarters implements Train {
+
+	private int gold;
+	private int income;
+	private final List<Building> buildings;
+	private final Position coordenates;
+	private final List<Unit> units = new ArrayList<>();
+
+	public HeadQuarters(final Position coordenates, final List<Building> buildings) {
+		this.coordenates = coordenates;
+		this.buildings = buildings;
+	}
+
+	public int getGold() {
+		return gold;
+	}
+
+	public void setGold(final int gold) {
+		this.gold = gold;
+	}
+
+	public int getIncome() {
+		return income;
+	}
+
+	public void setIncome(final int income) {
+		this.income = income;
+	}
+
+	public List<Building> getBuildings() {
+		return buildings;
+	}
+
+	public Position getCoordenates() {
+		return coordenates;
+	}
+
+	List<Unit> getUnits() {
+		return units;
+	}
+
+	/**
+	 * Atualiza a unidade na lista de unidades que possui o id passado como
+	 * parametro Se a unidade nao existir ela eh criada e inserida na lista de
+	 * unidades
+	 */
+	void updateUnits(final int id, final int level, final Position position) {
+		final Optional<Unit> possibleUnit = units.stream().filter(u -> u.getId() == id).findFirst();
+		Unit unit;
+		if (!possibleUnit.isPresent()) {
+			unit = new Unit(id, level, position);
+			units.add(unit);
+			return;
+		}
+		possibleUnit.get().setCoordenates(position);
+
+	}
+
+	@Override
+	public String train(final Position coordenate) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+}
+
+
+class InputHolder {
+
+	final static Scanner input = new Scanner(System.in);
+}
+
+class Map {
+	private final char[][] map = new char[Rules.MapWide.getValue()][Rules.MapHigh.getValue()];
+
+	void setMapOnLine(final int line, final String lineInfo) {
+		for (int i = 0; i < Rules.MapWide.getValue(); i++) {
 			map[line][i] = lineInfo.charAt(i);
 		}
 	}
 
-	private static void exec(String commands) {
+	char[][] getMap() {
+		return map;
+	}
+
+	Position getPositionWithChar(final char key) {
+		for (int x = 0; x < Rules.MapWide.getValue(); x++) {
+			for (int y = 0; y < Rules.MapHigh.getValue(); y++) {
+				if (key == map[x][y]) {
+					return Position.create(x, y);
+				}
+			}
+		}
+		return null;
+	}
+
+	Position moveToOpenSpace(final Position position) {
+		if (map[position.getX() + 1][position.getY()] != '#') {
+			return Position.create(position.getX(), position.getY() + 1);
+		}
+		if (map[position.getX()][position.getY() + 1] != '#') {
+			return Position.create(position.getX() + 1, position.getY());
+		}
+		return Position.create(position.getX() + 1, position.getY() + 1);
+	}
+}
+
+interface Move {
+	String move(Position destination);
+}
+
+interface Output {
+	default void exec(final String commands) {
 		System.out.println(commands);
 	}
 
-	public static void log( final Object message) {
+	default void log(final Object message) {
 		System.err.println(String.valueOf(message));
 	}
 }
@@ -161,15 +328,17 @@ final class Game{
 class Player {
 
 	public static void main(final String args[]) {
-		Game.getMines();
+
+		Game.GAME.setMines();
+
 		while (true) {
-			Game.run();
+			Game.GAME.run();
 		}
-		
 	}
 }
 
-public final class Position{
+
+final class Position {
 	private int x;
 	private int y;
 
@@ -178,7 +347,7 @@ public final class Position{
 		this.y = y;
 	}
 
-	public static Position create(final int x, final int y){
+	public static Position create(final int x, final int y) {
 		return new Position(x, y);
 	}
 
@@ -199,8 +368,31 @@ public final class Position{
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (obj instanceof Position) {
+			final Position pos = (Position) obj;
+			if (this == pos) {
+				return true;
+			}
+			if (x == pos.getX() && y == pos.getY()) {
+				return true;
+			}
+		}
+		return false;
+
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(x, y);
+	}
+
+	@Override
 	public String toString() {
-		return "(x,y) = (" + x + "," + y + ")" ;
+		return "(x,y) = (" + x + "," + y + ")";
 	}
 }
 
@@ -210,8 +402,8 @@ enum Rules {
 	IncomeForCell(1),
 	AlliesUnits(0),
 	Unit1Cost(10),
-	Unit1Income(1);
-	
+	Unit1UpKeep(1);
+
 
 	private int value;
 
@@ -219,67 +411,91 @@ enum Rules {
 		this.value = value;
 	}
 
-	int getValue() {
+	public int getValue() {
 		return value;
 	}
 }
 
 enum Strategy {
-	Default{
+	Default {
 		@Override
 		public String run() {
-			String result = "WAIT;";
-			return result;
+			final StringBuilder builder = new StringBuilder();
+			if (Game.GAME.getOwnHeadQuarters().getGold() > 21) {
+				builder.append(train(1, Position.create(0, 1)));
+			}
+			Game.GAME.log(Game.GAME.getOwnHeadQuarters().getGold());
+			for (final Unit unit : Game.GAME.getOwnHeadQuarters().getUnits()) {
+				builder.append(unit.move(Game.GAME.getMap().moveToOpenSpace(unit.getCoordenates())));
+			}
+			if (builder.toString().isEmpty()) {
+				return "WAIT;";
+			}
+			return builder.toString();
 		}
-		
+	},
+	TrainOneAndMoveToOpponentHQ {
+		@Override
+		public String run() {
+			final StringBuilder builder = new StringBuilder();
+			if (Game.GAME.getOwnHeadQuarters().getUnits().size() == 0
+					&& Game.GAME.getOwnHeadQuarters().getGold() > 21) {
+				final Position hq = Game.GAME.getOwnHeadQuarters().getCoordenates();
+				Position trainPosition = getTrainArea();
+				if (trainPosition.equals(hq)) {
+					trainPosition = Position.create(hq.getX(), hq.getY() + 1);
+				}
+				builder.append(train(1, trainPosition));
+			}
+
+			for (final Unit unit : Game.GAME.getOwnHeadQuarters().getUnits()) {
+				builder.append(unit.move(Game.GAME.getOpponentHeadQuarters().getCoordenates()));
+			}
+
+			if (builder.toString().isEmpty()) {
+				return "WAIT;MSG TEST;";
+			}
+			return builder.toString();
+		}
 	};
-	
+
 	public abstract String run();
 
-	private static String train(int level, Position coordenates) {
-		return String.format("TRAIN %d %d %d;", level, coordenates.getX(), coordenates.getY());
+	private static String train(final int lvl, final Position coordenates) {
+		return String.format("TRAIN %d %d %d;", lvl, coordenates.getX(), coordenates.getY());
 	}
-	
-	private static String move(int id, Position destination) {
-		return String.format("MOVE %d %d %d;", id, destination.getX(), destination.getY());
+
+	private static Position getTrainArea() {
+		return Game.GAME.getMap().getPositionWithChar('O');
 	}
-	
-	private static Position moveToOpenSpace(Position position) {
-		char[][] map = Game.getMap();
-		if(map[position.getX()+1][position.getY()] != '#') {
-			return Position.create(position.getX(), position.getY() + 1);
-		}
-		if(map[position.getX()][position.getY()+1] != '#') {
-			return Position.create(position.getX() + 1, position.getY());
-		}
-		return null;
-	}
-	
+
 }
 
+interface Train {
+	String train(Position coordenate);
+}
 
-public class Unit {
+class Unit implements Move {
 
-	private int id;
+	private final int id;
 	private int level;
 	Position coordenates;
 
-	public Unit(){
+	public Unit(final int id, final int level, final Position coordenates) {
+		this.id = id;
+		this.level = level;
+		this.coordenates = coordenates;
 	}
 
 	public int getId() {
 		return id;
 	}
 
-	public void setId(int id) {
-		this.id = id;
-	}
-
 	public int getLevel() {
 		return level;
 	}
 
-	public void setLevel(int level) {
+	public void setLevel(final int level) {
 		this.level = level;
 	}
 
@@ -287,7 +503,13 @@ public class Unit {
 		return coordenates;
 	}
 
-	public void setCoordenates(Position coordenates) {
+	public void setCoordenates(final Position coordenates) {
 		this.coordenates = coordenates;
 	}
+
+	@Override
+	public String move(final Position destination) {
+		return String.format("MOVE %d %d %d;", id, destination.getX(), destination.getY());
+	}
+
 }

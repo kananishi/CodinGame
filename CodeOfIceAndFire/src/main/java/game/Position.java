@@ -1,5 +1,8 @@
 package game;
-final class Position{
+
+import java.util.Objects;
+
+final class Position {
 	private int x;
 	private int y;
 
@@ -8,7 +11,7 @@ final class Position{
 		this.y = y;
 	}
 
-	public static Position create(final int x, final int y){
+	public static Position create(final int x, final int y) {
 		return new Position(x, y);
 	}
 
@@ -29,7 +32,30 @@ final class Position{
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (obj == null) {
+			return false;
+		}
+		if (obj instanceof Position) {
+			final Position pos = (Position) obj;
+			if (this == pos) {
+				return true;
+			}
+			if (x == pos.getX() && y == pos.getY()) {
+				return true;
+			}
+		}
+		return false;
+
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(x, y);
+	}
+
+	@Override
 	public String toString() {
-		return "(x,y) = (" + x + "," + y + ")" ;
+		return "(x,y) = (" + x + "," + y + ")";
 	}
 }

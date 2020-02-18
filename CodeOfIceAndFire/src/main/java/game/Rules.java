@@ -1,12 +1,13 @@
 package game;
 
-public enum Rules {
+enum Rules {
 	MapWide(12),
 	MapHigh(12),
 	IncomeForCell(1),
+	AlliesUnits(0),
 	Unit1Cost(10),
-	Unit1Income(1);
-	
+	Unit1UpKeep(1);
+
 
 	private int value;
 
@@ -14,7 +15,7 @@ public enum Rules {
 		this.value = value;
 	}
 
-	int getValue() {
+	public int getValue() {
 		return value;
 	}
 }

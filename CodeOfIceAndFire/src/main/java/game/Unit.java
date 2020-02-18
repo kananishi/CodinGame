@@ -1,27 +1,26 @@
 package game;
 
-public class Unit {
+class Unit implements Move {
 
-	private int id;
+	private final int id;
 	private int level;
 	Position coordenates;
 
-	Unit(){
+	public Unit(final int id, final int level, final Position coordenates) {
+		this.id = id;
+		this.level = level;
+		this.coordenates = coordenates;
 	}
 
 	public int getId() {
 		return id;
 	}
 
-	public void setId(int id) {
-		this.id = id;
-	}
-
 	public int getLevel() {
 		return level;
 	}
 
-	public void setLevel(int level) {
+	public void setLevel(final int level) {
 		this.level = level;
 	}
 
@@ -29,7 +28,13 @@ public class Unit {
 		return coordenates;
 	}
 
-	public void setCoordenates(Position coordenates) {
+	public void setCoordenates(final Position coordenates) {
 		this.coordenates = coordenates;
 	}
+
+	@Override
+	public String move(final Position destination) {
+		return String.format("MOVE %d %d %d;", id, destination.getX(), destination.getY());
+	}
+
 }

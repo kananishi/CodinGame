@@ -1,20 +1,10 @@
 package generator;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.channels.FileChannel;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.Scanner;
 
-import javax.swing.event.ListSelectionEvent;
 
 
 public final class SingleFileGenerator {
@@ -94,6 +84,7 @@ public final class SingleFileGenerator {
 				|| line.startsWith("//")
 				|| line.startsWith("/**")
 				|| line.startsWith("*")
+				|| line.startsWith(" *")
 				|| line.startsWith("*/");
 	}
 

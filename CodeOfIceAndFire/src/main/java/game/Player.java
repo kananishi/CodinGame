@@ -3,10 +3,11 @@ package game;
 class Player {
 
 	public static void main(final String args[]) {
+
+		Game.GAME.setMines();
+
 		while (true) {
-			//Game.run(Strategy.SaveHumansInDanger);
-			System.out.println("abc".charAt(1));
+			Game.GAME.run();
 		}
 	}
 }
-
