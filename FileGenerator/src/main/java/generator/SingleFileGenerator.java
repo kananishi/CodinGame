@@ -1,27 +1,25 @@
 package generator;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Scanner;
 
-
-
 public final class SingleFileGenerator {
 
-	private static final String sourceFolder = System.getProperty("user.home") + "\\Documents\\Work\\sources\\CodingGames\\";
+	private static final String sourceFolder = System.getProperty("user.home")
+			+ "\\Documents\\Work\\sources\\CodingGames\\";
 	private static final String javaProject = "src\\main\\java\\";
-	
+
 	private static final String actualGame = "CodeOfIceAndFire\\";
 	private static final String gameFolder = "game\\";
-	
+
 	private static final String fileGenerator = "FileGenerator\\";
 	private static final String singleFileFolder = "\\generated\\singleFile\\Player.txt";
 
-	private static final String defaultImport = "import java.util.*;\n"
-			+ "import java.io.*;\n"
-			+ "import java.math.*;\n"
-			+ "import static java.util.stream.Collectors.toList;";
+	private static final String defaultImport = "import java.util.*;\n" + "import java.io.*;\n"
+			+ "import java.math.*;\n" + "import static java.util.stream.Collectors.toList;";
 
 	public static final void main(final String[] args) {
 		try {
@@ -33,7 +31,8 @@ public final class SingleFileGenerator {
 	}
 
 	/**
-	 * Concatena todas as classes da classesFolder num unico arquivo na singleFileFolder
+	 * Concatena todas as classes da classesFolder num unico arquivo na
+	 * singleFileFolder
 	 *
 	 * @throws IOException
 	 */
@@ -49,12 +48,12 @@ public final class SingleFileGenerator {
 	}
 
 	private static void concatenateDirectoryFiles(final File dir, final PrintWriter fout) {
-		if(dir.isDirectory()) {
-			for(File file : dir.listFiles()) {
+		if (dir.isDirectory()) {
+			for (final File file : dir.listFiles()) {
 				concatenateDirectoryFiles(file, fout);
 			}
 		}
-		if(dir.isFile()) {
+		if (dir.isFile()) {
 			copyFileToNewFile(dir, fout);
 		}
 		return;
@@ -63,15 +62,20 @@ public final class SingleFileGenerator {
 	private static void copyFileToNewFile(final File file, final PrintWriter fout) {
 		try {
 			final Scanner in = new Scanner(file);
-			while(in.hasNextLine()) {
+			while (in.hasNextLine()) {
 				final String line = in.nextLine();
-				if(!ignoreOnCompile(line)) {
+				if (!ignoreOnCompile(line)) {
+					if (isPublicClass(line)) {
+						// como nos jogos nao eh possivel ter uma classe,
+						// interface ou enum public eh preciso retirar a declaracao public
+						fout.println(line.replace("public", ""));
+						continue;
+					}
 					fout.println(line);
 				}
 			}
 			in.close();
-		}catch (Exception e) {
-			// TODO: handle exception
+		} catch (final Exception e) {
 		}
 	}
 
@@ -79,13 +83,16 @@ public final class SingleFileGenerator {
 	 * Retorna false se a linha for package, import, ou comentario
 	 */
 	private static boolean ignoreOnCompile(final String line) {
-		return line.startsWith("package")
-				|| line.startsWith("import")
-				|| line.startsWith("//")
-				|| line.startsWith("/**")
-				|| line.startsWith("*")
-				|| line.startsWith(" *")
-				|| line.startsWith("*/");
+		return line.startsWith("package") || line.startsWith("import") || line.startsWith("//")
+				|| line.startsWith("/**") || line.startsWith("*") || line.startsWith(" *") || line.startsWith("*/");
 	}
 
+	/**
+	 * Retorna true se a linha for a declaracao de uma classe ou uma interface
+	 * publica
+	 */
+	private static boolean isPublicClass(final String line) {
+		return line.contains("public")
+				&& (line.contains("class") || line.contains("interface") || line.contains("enum"));
+	}
 }

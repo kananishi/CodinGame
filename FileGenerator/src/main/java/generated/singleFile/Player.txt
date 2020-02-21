@@ -2,6 +2,7 @@ import java.util.*;
 import java.io.*;
 import java.math.*;
 import static java.util.stream.Collectors.toList;
+
 class Building {
 
 	private final boolean owned; // 0: Owned 1: Enemy
@@ -27,195 +28,63 @@ class Building {
 	public Building(final Position coordenates, final String type, final boolean owner) {
 		this.coordenates = coordenates;
 		this.type = type;
-		this.owned = owner;
+		owned = owner;
 	}
 
-	private Building(final Builder builder) {
+	Building(final BuildingBuilder builder) {
 		coordenates = builder.coordenates;
 		type = builder.type;
 		owned = builder.owned;
 	}
+}
 
-	public static class Builder {
-		private boolean owned = false; // true: Owned false: Enemy
-		private String type = "";
-		private Position coordenates = null;
 
-		public Builder() {
-		}
+ class BuildingBuilder {
+	boolean owned = false; // true: Owned false: Enemy
+	String type = "";
+	Position coordenates = null;
 
-		public Builder owner(final int value) {
-			owned = value == 0 ? true : false;
-			return this;
-		}
+	public BuildingBuilder() {
+	}
 
-		public Builder type(final int value) {
-			type = value == 0 ? "HQ" : "";
-			return this;
-		}
+	public BuildingBuilder owner(final int value) {
+		owned = value == 0 ? true : false;
+		return this;
+	}
 
-		public Builder coordenates(final Position value) {
-			coordenates = value;
-			return this;
-		}
+	public BuildingBuilder type(final int value) {
+		type = value == 0 ? "HQ" : "";
+		return this;
+	}
 
-		Building build() {
-			return new Building(this);
-		}
+	public BuildingBuilder coordenates(final Position value) {
+		coordenates = value;
+		return this;
+	}
+
+	Building build() {
+		return new Building(this);
 	}
 }
 
 
 
-final class Game implements Output {
-
-	public static Game GAME = new Game();
-
-	private HeadQuarters ownHeadQuarters;
-	private HeadQuarters opponentHeadQuarters;
-
-	private int numberMineSpots;
-	private final List<Position> mineSpots = new ArrayList<>();
-
-	private final Map map = new Map();
-
-	private int buildingCount;
-	private final List<Building> buildings = new ArrayList<>();
-
-	private Game() {
-	}
-
-	HeadQuarters getOwnHeadQuarters() {
-		return ownHeadQuarters;
-	}
-
-	HeadQuarters getOpponentHeadQuarters() {
-		return opponentHeadQuarters;
-	}
-
-	List<Position> getMineSpots() {
-		return mineSpots;
-	}
-
-	Map getMap() {
-		return map;
-	}
-
-	List<Building> getBuildings() {
-		return buildings;
-	}
-
-	void setMines() {
-		numberMineSpots = InputHolder.input.nextInt();
-		for (int i = 0; i < numberMineSpots; i++) {
-			mineSpots.add(Position.create(InputHolder.input.nextInt(), InputHolder.input.nextInt()));
-		}
-	}
-
-	void run() {
-		updateParameters();
-		exec(Strategy.TrainOneAndMoveToOpponentHQ.run());
-	}
-
-	void updateParameters() {
-		final int gold = InputHolder.input.nextInt();
-		final int income = InputHolder.input.nextInt();
-		final int opponentGold = InputHolder.input.nextInt();
-		final int opponentIncome = InputHolder.input.nextInt();
-
-		for (int i = 0; i < Rules.MapWide.getValue(); i++) {
-			map.setMapOnLine(i, InputHolder.input.next());
-		}
-
-		createOrUpdateBuildings(InputHolder.input.nextInt());
-
-		createOrUpdateHeadQuarters(gold, income, opponentGold, opponentIncome);
-
-		createOrUpdateUnits(InputHolder.input.nextInt());
-	}
-
-	private void createOrUpdateBuildings(final int numberOfBuildings) {
-		for (int i = 0; i < numberOfBuildings; i++) {
-			final int owner = InputHolder.input.nextInt();
-			final int type = InputHolder.input.nextInt();
-			final Position coordenates = Position.create(InputHolder.input.nextInt(), InputHolder.input.nextInt());
-
-			final Optional<Building> possibleBuilding = buildings.stream()
-					.filter(b -> b.getCoordenates().equals(coordenates)).findFirst();
-
-			if (possibleBuilding.isPresent()) {
-				log("Building already exists");
-				continue;
-			}
-
-			final Building.Builder builder = new Building.Builder();
-			builder.owner(owner);
-			builder.type(type);
-			builder.coordenates(coordenates);
-			buildings.add(builder.build());
-		}
-	}
-
-	private void createOrUpdateHeadQuarters(final int gold, final int income, final int opponentGold,
-			final int opponentIncome) {
-		if (ownHeadQuarters == null) {
-			ownHeadQuarters = createHQ(true);
-		}
-		ownHeadQuarters.setGold(gold);
-		ownHeadQuarters.setIncome(income);
-
-		if (opponentHeadQuarters == null) {
-			opponentHeadQuarters = createHQ(false);
-		}
-		opponentHeadQuarters.setGold(opponentGold);
-		opponentHeadQuarters.setIncome(opponentGold);
-	}
-
-	/**
-	 * Cria um novo HQ recebe como parametro um booleano que diz se o HQ pertence ao
-	 * jogador(true) ou ao bot (false)
-	 */
-	private HeadQuarters createHQ(final boolean own) {
-		final List<Building> builds = buildings.stream().filter(b -> b.isOwn() == own).collect(toList());
-
-		final Optional<Building> possibleHQ = builds.stream().filter(b -> b.getType().contentEquals("HQ")).findFirst();
-		if (!possibleHQ.isPresent()) {
-			throw new IllegalArgumentException("Deve existir um HQ");
-		}
-		final Building building = possibleHQ.get();
-		log("Create hq isOwn: " + own);
-		log(building.getCoordenates());
-
-		return new HeadQuarters(building.getCoordenates(), builds);
-	}
-
-	private void createOrUpdateUnits(final int unitCount) {
-		for (int i = 0; i < unitCount; i++) {
-			final int owner = InputHolder.input.nextInt();
-			final int id = InputHolder.input.nextInt();
-			final int level = InputHolder.input.nextInt();
-			final Position position = Position.create(InputHolder.input.nextInt(), InputHolder.input.nextInt());
-			if (owner == Rules.AlliesUnits.getValue()) {
-				ownHeadQuarters.updateUnits(id, level, position);
-				continue;
-			}
-			opponentHeadQuarters.updateUnits(id, level, position);
-		}
-	}
-}
-
-
-final class HeadQuarters implements Train {
+ final class HeadQuarters {
 
 	private int gold;
 	private int income;
 	private final List<Building> buildings;
-	private final Position coordenates;
+	private Position coordenates;
 	private final List<Unit> units = new ArrayList<>();
+	private Train strategy;
 
 	public HeadQuarters(final Position coordenates, final List<Building> buildings) {
 		this.coordenates = coordenates;
 		this.buildings = buildings;
+	}
+
+	public static HeadQuarters createHQFoundation() {
+		return new HeadQuarters(Position.create(-1, -1), new ArrayList<Building>());
 	}
 
 	public int getGold() {
@@ -242,7 +111,13 @@ final class HeadQuarters implements Train {
 		return coordenates;
 	}
 
-	List<Unit> getUnits() {
+	public void setCoordenates(final Position coordenates) {
+		if (coordenates.equals(Position.INVALID_POSITION)) {
+			this.coordenates = coordenates;
+		}
+	}
+
+	public List<Unit> getUnits() {
 		return units;
 	}
 
@@ -263,11 +138,217 @@ final class HeadQuarters implements Train {
 
 	}
 
-	@Override
-	public String train(final Position coordenate) {
-		// TODO Auto-generated method stub
-		return null;
+	public Train getStrategy() {
+		return strategy;
 	}
+
+	public void setStrategy(final Train strategy) {
+		this.strategy = strategy;
+	}
+
+	public String runStrategy(final int level) {
+		return strategy.train(level);
+	}
+
+}
+
+
+
+
+ class HeadQuartersManager {
+
+	public static final HeadQuartersManager MANAGER = new HeadQuartersManager();
+
+	private final HeadQuarters ownHeadQuarters = HeadQuarters.createHQFoundation();
+	private final HeadQuarters opponentHeadQuarters = HeadQuarters.createHQFoundation();
+
+	public HeadQuarters getOwnHeadQuarters() {
+		return ownHeadQuarters;
+	}
+
+	public HeadQuarters getOpponentHeadQuarters() {
+		return opponentHeadQuarters;
+	}
+
+	public void createOrUpdateBuilding(final int owner, final int type, final Position coordenates) {
+		final List<Building> buildings = owner == 0 ? ownHeadQuarters.getBuildings()
+				: opponentHeadQuarters.getBuildings();
+		final Optional<Building> possibleBuilding = buildings.stream()
+				.filter(b -> b.getCoordenates().equals(coordenates)).findFirst();
+
+		if (possibleBuilding.isPresent()) {
+			return;
+		}
+
+		final BuildingBuilder builder = new BuildingBuilder();
+		builder.owner(owner);
+		builder.type(type);
+		builder.coordenates(coordenates);
+		buildings.add(builder.build());
+	}
+
+	public void updateHeadQuarters(final int gold, final int income, final int opponentGold, final int opponentIncome) {
+		if (ownHeadQuarters.getCoordenates() == Position.create(-1, -1)) {
+			setHQPosition(true);
+		}
+		ownHeadQuarters.setGold(gold);
+		ownHeadQuarters.setIncome(income);
+
+		if (opponentHeadQuarters.getCoordenates() == Position.create(-1, -1)) {
+			setHQPosition(false);
+		}
+		opponentHeadQuarters.setGold(opponentGold);
+		opponentHeadQuarters.setIncome(opponentGold);
+	}
+
+	/**
+	 * Cria um novo HQ recebe como parametro um booleano que diz se o HQ pertence ao
+	 * jogador(true) ou ao bot (false)
+	 */
+	private void setHQPosition(final boolean own) {
+
+		final HeadQuarters hq = own ? ownHeadQuarters : opponentHeadQuarters;
+		final List<Building> builds = hq.getBuildings().stream().filter(b -> b.isOwn() == own).collect(toList());
+
+		final Optional<Building> possibleHQ = builds.stream().filter(b -> b.getType().contentEquals("HQ")).findFirst();
+		if (!possibleHQ.isPresent()) {
+			throw new IllegalArgumentException("Deve existir um HQ");
+		}
+		final Building building = possibleHQ.get();
+		Game.GAME.log("Create hq isOwn: " + own);
+		Game.GAME.log(building.getCoordenates());
+
+		hq.setCoordenates(building.getCoordenates());
+	}
+
+	public void updateUnits(final int owner, final int id, final int level, final Position position) {
+		if (owner == Rules.AlliesUnits.getValue()) {
+			ownHeadQuarters.updateUnits(id, level, position);
+			return;
+		}
+		opponentHeadQuarters.updateUnits(id, level, position);
+	}
+
+}
+
+
+ class Unit {
+
+	private final int id;
+	private int level;
+	Position coordenates;
+	private Move strategy;
+
+	public Unit(final int id, final int level, final Position coordenates) {
+		this.id = id;
+		this.level = level;
+		this.coordenates = coordenates;
+	}
+
+	public int getId() {
+		return id;
+	}
+
+	public int getLevel() {
+		return level;
+	}
+
+	public void setLevel(final int level) {
+		this.level = level;
+	}
+
+	public Position getCoordenates() {
+		return coordenates;
+	}
+
+	public void setCoordenates(final Position coordenates) {
+		this.coordenates = coordenates;
+	}
+
+	public Move getStrategy() {
+		return strategy;
+	}
+
+	public void setStrategy(final Move strategy) {
+		this.strategy = strategy;
+	}
+
+	public String runStrategy() {
+		return strategy.move(this);
+	}
+}
+
+
+
+ final class Game implements Output {
+
+	public static Game GAME = new Game();
+
+	private int numberMineSpots;
+	private final List<Position> mineSpots = new ArrayList<>();
+
+	private final MapManager mapManager = MapManager.MANAGER;
+	private final HeadQuartersManager headQuartersManager = HeadQuartersManager.MANAGER;
+
+	private int buildingCount;
+
+	private Game() {
+	}
+
+	List<Position> getMineSpots() {
+		return mineSpots;
+	}
+
+	void setMines() {
+		numberMineSpots = InputHolder.input.nextInt();
+		for (int i = 0; i < numberMineSpots; i++) {
+			mineSpots.add(Position.create(InputHolder.input.nextInt(), InputHolder.input.nextInt()));
+		}
+	}
+
+	void run(final GameStrategy strategy) {
+		updateParameters();
+		String commands = strategy.run();
+		if (commands.isEmpty()) {
+			commands = "WAIT;";
+		}
+		exec(commands);
+	}
+
+	void updateParameters() {
+		final int gold = InputHolder.input.nextInt();
+		final int income = InputHolder.input.nextInt();
+		final int opponentGold = InputHolder.input.nextInt();
+		final int opponentIncome = InputHolder.input.nextInt();
+
+		for (int i = 0; i < Rules.MapWide.getValue(); i++) {
+			mapManager.updateMapOnLine(i, InputHolder.input.next());
+		}
+
+		updateBuildings(InputHolder.input.nextInt());
+		headQuartersManager.updateHeadQuarters(gold, income, opponentGold, opponentIncome);
+		createOrUpdateUnits(InputHolder.input.nextInt());
+	}
+
+	private void updateBuildings(final int numberOfBuildings) {
+		for (int i = 0; i < numberOfBuildings; i++) {
+			final int owner = InputHolder.input.nextInt();
+			final int type = InputHolder.input.nextInt();
+			final Position coordenates = Position.create(InputHolder.input.nextInt(), InputHolder.input.nextInt());
+			headQuartersManager.createOrUpdateBuilding(owner, type, coordenates);
+		}
+	}
+
+	private void createOrUpdateUnits(final int unitCount) {
+		for (int i = 0; i < unitCount; i++) {
+			final int owner = InputHolder.input.nextInt();
+			final int id = InputHolder.input.nextInt();
+			final int level = InputHolder.input.nextInt();
+			final Position position = Position.create(InputHolder.input.nextInt(), InputHolder.input.nextInt());
+			headQuartersManager.updateUnits(owner, id, level, position);
+		}
+	}
+
 }
 
 
@@ -276,17 +357,12 @@ class InputHolder {
 	final static Scanner input = new Scanner(System.in);
 }
 
-class Map {
+
+final class Map {
 	private final char[][] map = new char[Rules.MapWide.getValue()][Rules.MapHigh.getValue()];
 
-	void setMapOnLine(final int line, final String lineInfo) {
-		for (int i = 0; i < Rules.MapWide.getValue(); i++) {
-			map[line][i] = lineInfo.charAt(i);
-		}
-	}
-
-	char[][] getMap() {
-		return map;
+	void setMap(final Position position, final char value) {
+		map[position.getX()][position.getY()] = value;
 	}
 
 	Position getPositionWithChar(final char key) {
@@ -300,7 +376,7 @@ class Map {
 		return null;
 	}
 
-	Position moveToOpenSpace(final Position position) {
+	Position getOpenSpace(final Position position) {
 		if (map[position.getX() + 1][position.getY()] != '#') {
 			return Position.create(position.getX(), position.getY() + 1);
 		}
@@ -311,8 +387,49 @@ class Map {
 	}
 }
 
-interface Move {
-	String move(Position destination);
+ enum MapCodes {
+	VOID('#'),
+	NEUTRAL('.'), 
+	ACTIVE_OWNED('O'), 
+	INACTIVE_OWNED('o'), 
+	ACTIVE_OPPONENT('X'), 
+	INACTIVE_OPPONENT('x');
+
+	char code;
+
+	MapCodes(final char code) {
+		this.code = code;
+	}
+	
+	char getCode() {
+		return code;
+	}
+}
+
+
+ class MapManager {
+
+	public static final MapManager MANAGER = new MapManager();
+
+	private final Map map = new Map();
+
+	private MapManager() {
+	}
+
+	public void updateMapOnLine(final int line, final String lineInfo) {
+		for (int i = 0; i < Rules.MapWide.getValue(); i++) {
+			map.setMap(Position.create(line, i), lineInfo.charAt(i));
+		}
+	}
+
+	public Position getTrainArea() {
+		return map.getPositionWithChar(MapCodes.ACTIVE_OWNED.getCode());
+	}
+
+	public Position getOpenSpace(final Position position) {
+		return map.getOpenSpace(position);
+	}
+
 }
 
 interface Output {
@@ -325,6 +442,7 @@ interface Output {
 	}
 }
 
+
 class Player {
 
 	public static void main(final String args[]) {
@@ -332,15 +450,17 @@ class Player {
 		Game.GAME.setMines();
 
 		while (true) {
-			Game.GAME.run();
+			Game.GAME.run(BasicStrategy.STRATEGY);
 		}
 	}
 }
 
 
-final class Position {
+ final class Position {
 	private int x;
 	private int y;
+
+	public static final Position INVALID_POSITION = new Position(-1, -1);
 
 	public Position(final int x, final int y) {
 		this.x = x;
@@ -396,7 +516,7 @@ final class Position {
 	}
 }
 
-enum Rules {
+ enum Rules {
 	MapWide(12),
 	MapHigh(12),
 	IncomeForCell(1),
@@ -416,100 +536,81 @@ enum Rules {
 	}
 }
 
-enum Strategy {
-	Default {
-		@Override
-		public String run() {
-			final StringBuilder builder = new StringBuilder();
-			if (Game.GAME.getOwnHeadQuarters().getGold() > 21) {
-				builder.append(train(1, Position.create(0, 1)));
-			}
-			Game.GAME.log(Game.GAME.getOwnHeadQuarters().getGold());
-			for (final Unit unit : Game.GAME.getOwnHeadQuarters().getUnits()) {
-				builder.append(unit.move(Game.GAME.getMap().moveToOpenSpace(unit.getCoordenates())));
-			}
-			if (builder.toString().isEmpty()) {
-				return "WAIT;";
-			}
-			return builder.toString();
-		}
-	},
-	TrainOneAndMoveToOpponentHQ {
-		@Override
-		public String run() {
-			final StringBuilder builder = new StringBuilder();
-			if (Game.GAME.getOwnHeadQuarters().getUnits().size() == 0
-					&& Game.GAME.getOwnHeadQuarters().getGold() > 21) {
-				final Position hq = Game.GAME.getOwnHeadQuarters().getCoordenates();
-				Position trainPosition = getTrainArea();
-				if (trainPosition.equals(hq)) {
-					trainPosition = Position.create(hq.getX(), hq.getY() + 1);
-				}
-				builder.append(train(1, trainPosition));
-			}
 
-			for (final Unit unit : Game.GAME.getOwnHeadQuarters().getUnits()) {
-				builder.append(unit.move(Game.GAME.getOpponentHeadQuarters().getCoordenates()));
-			}
+ interface CommandStrategy {
 
-			if (builder.toString().isEmpty()) {
-				return "WAIT;MSG TEST;";
-			}
-			return builder.toString();
-		}
-	};
-
-	public abstract String run();
-
-	private static String train(final int lvl, final Position coordenates) {
-		return String.format("TRAIN %d %d %d;", lvl, coordenates.getX(), coordenates.getY());
-	}
-
-	private static Position getTrainArea() {
-		return Game.GAME.getMap().getPositionWithChar('O');
+	default String command(final String command, final int param, final Position position) {
+		return String.format("%s %d %d %d;", command.toUpperCase(), param, position.getX(), position.getY());
 	}
 
 }
 
-interface Train {
-	String train(Position coordenate);
-}
 
-class Unit implements Move {
+ class BasicStrategy implements GameStrategy {
 
-	private final int id;
-	private int level;
-	Position coordenates;
-
-	public Unit(final int id, final int level, final Position coordenates) {
-		this.id = id;
-		this.level = level;
-		this.coordenates = coordenates;
-	}
-
-	public int getId() {
-		return id;
-	}
-
-	public int getLevel() {
-		return level;
-	}
-
-	public void setLevel(final int level) {
-		this.level = level;
-	}
-
-	public Position getCoordenates() {
-		return coordenates;
-	}
-
-	public void setCoordenates(final Position coordenates) {
-		this.coordenates = coordenates;
-	}
+	public final static BasicStrategy STRATEGY = new BasicStrategy();
 
 	@Override
-	public String move(final Position destination) {
-		return String.format("MOVE %d %d %d;", id, destination.getX(), destination.getY());
+	public String run() {
+		final StringBuilder commands = new StringBuilder();
+		final HeadQuarters ownHeadQuarters = HeadQuartersManager.MANAGER.getOwnHeadQuarters();
+		ownHeadQuarters.setStrategy(SoloQuestStrategy.STRATEGY);
+		commands.append(ownHeadQuarters.runStrategy(1));
+		ownHeadQuarters.getUnits().forEach(u -> u.setStrategy(AttackHeadQuartersStrategy.STRATEGY));
+		ownHeadQuarters.getUnits().forEach(u -> commands.append(u.runStrategy()));
+		return commands.toString();
 	}
 
+}
+
+ interface GameStrategy {
+
+	String run();
+}
+
+
+ class AttackHeadQuartersStrategy implements Move {
+
+	public static final Move STRATEGY = new AttackHeadQuartersStrategy();
+
+	@Override
+	public String move(final Unit unit) {
+		final StringBuilder builder = new StringBuilder();
+		builder.append(command("move", unit.getId(),
+				HeadQuartersManager.MANAGER.getOpponentHeadQuarters().getCoordenates()));
+		return builder.toString();
+	}
+
+}
+
+
+ interface Move extends CommandStrategy {
+	String move(Unit unit);
+}
+
+
+ class SoloQuestStrategy implements Train {
+
+	public static final Train STRATEGY = new SoloQuestStrategy();
+
+	@Override
+	public String train(final int level) {
+		final StringBuilder builder = new StringBuilder();
+		final HeadQuarters ownHeadQuarters = HeadQuartersManager.MANAGER.getOwnHeadQuarters();
+		if (ownHeadQuarters.getUnits().size() == 0 && ownHeadQuarters.getGold() > 21) {
+			final Position hq = ownHeadQuarters.getCoordenates();
+			Position trainPosition = MapManager.MANAGER.getTrainArea();
+			if (trainPosition.equals(hq)) {
+				trainPosition = Position.create(hq.getX(), hq.getY() + 1);
+			}
+			builder.append(command("train", level, trainPosition));
+		}
+
+		return builder.toString();
+	}
+}
+
+
+ interface Train extends CommandStrategy {
+	String train(final int level);
 }
