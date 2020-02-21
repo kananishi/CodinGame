@@ -2,9 +2,11 @@ package game;
 
 import java.util.Objects;
 
-final class Position {
+public final class Position {
 	private int x;
 	private int y;
+
+	public static final Position INVALID_POSITION = new Position(-1, -1);
 
 	public Position(final int x, final int y) {
 		this.x = x;

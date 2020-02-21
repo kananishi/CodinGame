@@ -1,5 +1,7 @@
 package game;
 
+import game.stategy.game.BasicStrategy;
+
 class Player {
 
 	public static void main(final String args[]) {
@@ -7,7 +9,7 @@ class Player {
 		Game.GAME.setMines();
 
 		while (true) {
-			Game.GAME.run();
+			Game.GAME.run(BasicStrategy.STRATEGY);
 		}
 	}
 }

@@ -1,6 +1,6 @@
 package game;
 
-enum Rules {
+public enum Rules {
 	MapWide(12),
 	MapHigh(12),
 	IncomeForCell(1),
