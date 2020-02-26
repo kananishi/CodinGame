@@ -42,13 +42,13 @@ public class HeadQuartersManager {
 	}
 
 	public void updateHeadQuarters(final int gold, final int income, final int opponentGold, final int opponentIncome) {
-		if (ownHeadQuarters.getCoordenates() == Position.create(-1, -1)) {
+		if (!ownHeadQuarters.getCoordenates().isValid()) {
 			setHQPosition(true);
 		}
 		ownHeadQuarters.setGold(gold);
 		ownHeadQuarters.setIncome(income);
 
-		if (opponentHeadQuarters.getCoordenates() == Position.create(-1, -1)) {
+		if (!opponentHeadQuarters.getCoordenates().isValid()) {
 			setHQPosition(false);
 		}
 		opponentHeadQuarters.setGold(opponentGold);
@@ -60,7 +60,6 @@ public class HeadQuartersManager {
 	 * jogador(true) ou ao bot (false)
 	 */
 	private void setHQPosition(final boolean own) {
-
 		final HeadQuarters hq = own ? ownHeadQuarters : opponentHeadQuarters;
 		final List<Building> builds = hq.getBuildings().stream().filter(b -> b.isOwn() == own).collect(toList());
 
@@ -75,12 +74,25 @@ public class HeadQuartersManager {
 		hq.setCoordenates(building.getCoordenates());
 	}
 
-	public void updateUnits(final int owner, final int id, final int level, final Position position) {
+	public void updateUnit(final int owner, final int id, final int level, final Position position) {
 		if (owner == Rules.AlliesUnits.getValue()) {
-			ownHeadQuarters.updateUnits(id, level, position);
+			ownHeadQuarters.updateUnit(id, level, position);
 			return;
 		}
-		opponentHeadQuarters.updateUnits(id, level, position);
+		opponentHeadQuarters.updateUnit(id, level, position);
+	}
+
+	public int getLevelTrainCost(final int level) {
+		return Units.values()[level].getTrainCost();
+	}
+
+	public int getLevelUpKeep(final int level) {
+		return Units.values()[level].getUpKeep();
+	}
+
+	public boolean isHeadQuarters(final Position position) {
+		return ownHeadQuarters.getCoordenates().equals(position)
+				|| opponentHeadQuarters.getCoordenates().equals(position);
 	}
 
 }

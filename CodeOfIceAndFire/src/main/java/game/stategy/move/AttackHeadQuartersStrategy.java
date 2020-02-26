@@ -10,8 +10,7 @@ public class AttackHeadQuartersStrategy implements Move {
 	@Override
 	public String move(final Unit unit) {
 		final StringBuilder builder = new StringBuilder();
-		builder.append(command("move", unit.getId(),
-				HeadQuartersManager.MANAGER.getOpponentHeadQuarters().getCoordenates()));
+		builder.append(command(unit.getId(), HeadQuartersManager.MANAGER.getOpponentHeadQuarters().getCoordenates()));
 		return builder.toString();
 	}
 

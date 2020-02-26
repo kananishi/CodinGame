@@ -10,14 +10,13 @@ import game.stategy.game.GameStrategy;
 public final class Game implements Output {
 
 	public static Game GAME = new Game();
+	private static int rounds = 0;
 
 	private int numberMineSpots;
 	private final List<Position> mineSpots = new ArrayList<>();
 
 	private final MapManager mapManager = MapManager.MANAGER;
 	private final HeadQuartersManager headQuartersManager = HeadQuartersManager.MANAGER;
-
-	private int buildingCount;
 
 	private Game() {
 	}
@@ -39,7 +38,7 @@ public final class Game implements Output {
 		if (commands.isEmpty()) {
 			commands = "WAIT;";
 		}
-		exec(commands);
+		exec(commands + "MSG Round: " + rounds + ";");
 	}
 
 	void updateParameters() {
@@ -48,13 +47,14 @@ public final class Game implements Output {
 		final int opponentGold = InputHolder.input.nextInt();
 		final int opponentIncome = InputHolder.input.nextInt();
 
-		for (int i = 0; i < Rules.MapWide.getValue(); i++) {
+		for (int i = 0; i < MapManager.MapWide; i++) {
 			mapManager.updateMapOnLine(i, InputHolder.input.next());
 		}
 
 		updateBuildings(InputHolder.input.nextInt());
 		headQuartersManager.updateHeadQuarters(gold, income, opponentGold, opponentIncome);
 		createOrUpdateUnits(InputHolder.input.nextInt());
+		rounds++;
 	}
 
 	private void updateBuildings(final int numberOfBuildings) {
@@ -72,7 +72,7 @@ public final class Game implements Output {
 			final int id = InputHolder.input.nextInt();
 			final int level = InputHolder.input.nextInt();
 			final Position position = Position.create(InputHolder.input.nextInt(), InputHolder.input.nextInt());
-			headQuartersManager.updateUnits(owner, id, level, position);
+			headQuartersManager.updateUnit(owner, id, level, position);
 		}
 	}
 

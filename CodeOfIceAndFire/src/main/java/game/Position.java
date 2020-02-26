@@ -3,8 +3,14 @@ package game;
 import java.util.Objects;
 
 public final class Position {
+
 	private int x;
 	private int y;
+
+	private Position north;
+	private Position south;
+	private Position east;
+	private Position west;
 
 	public static final Position INVALID_POSITION = new Position(-1, -1);
 
@@ -33,6 +39,42 @@ public final class Position {
 		return y;
 	}
 
+	public boolean isValid() {
+		return x >= 0 && x < 12 && y >= 0 && x < 12;
+	}
+
+	public int distanceTo(final Position position) {
+		return Math.abs(x - position.getX()) + Math.abs(y - position.getY());
+	}
+
+	public Position getNorthPosition() {
+		if (north == null) {
+			north = Position.create(x, y + 1);
+		}
+		return north;
+	}
+
+	public Position getSouthPosition() {
+		if (south == null) {
+			south = Position.create(x, y - 1);
+		}
+		return south;
+	}
+
+	public Position getEastPosition() {
+		if (east == null) {
+			east = Position.create(x + 1, y);
+		}
+		return east;
+	}
+
+	public Position getWestPosition() {
+		if (west == null) {
+			west = Position.create(x - 1, y);
+		}
+		return west;
+	}
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (obj == null) {
@@ -48,7 +90,6 @@ public final class Position {
 			}
 		}
 		return false;
-
 	}
 
 	@Override

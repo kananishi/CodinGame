@@ -5,7 +5,7 @@ import game.stategy.move.Move;
 
 public class Unit {
 
-	private final int id;
+	private int id;
 	private int level;
 	Position coordenates;
 	private Move strategy;
@@ -16,8 +16,22 @@ public class Unit {
 		this.coordenates = coordenates;
 	}
 
+	public static Unit ghostTrain(final int level, final Position coordenates, final Move strategy) {
+		final Unit unit = new Unit(-1, level, coordenates);
+		unit.setStrategy(strategy);
+		return unit;
+	}
+
 	public int getId() {
 		return id;
+	}
+
+	public Unit train(final int id) {
+		if (this.id < 0) {
+			this.id = id;
+			return this;
+		}
+		throw new IllegalArgumentException("Already trained");
 	}
 
 	public int getLevel() {

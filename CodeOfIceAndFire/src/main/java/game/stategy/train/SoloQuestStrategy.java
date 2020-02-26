@@ -3,7 +3,9 @@ package game.stategy.train;
 import game.Position;
 import game.entities.HeadQuarters;
 import game.entities.HeadQuartersManager;
+import game.entities.Unit;
 import game.map.MapManager;
+import game.stategy.move.AttackHeadQuartersStrategy;
 
 /**
  * Treina apenas uma unidade. Melhor economia
@@ -17,15 +19,11 @@ public class SoloQuestStrategy implements Train {
 	public String train(final int level) {
 		final StringBuilder builder = new StringBuilder();
 		final HeadQuarters ownHeadQuarters = HeadQuartersManager.MANAGER.getOwnHeadQuarters();
-		if (ownHeadQuarters.getUnits().size() == 0 && ownHeadQuarters.getGold() > 21) {
-			final Position hq = ownHeadQuarters.getCoordenates();
-			Position trainPosition = MapManager.MANAGER.getTrainArea();
-			if (trainPosition.equals(hq)) {
-				trainPosition = Position.create(hq.getX(), hq.getY() + 1);
-			}
-			builder.append(command("train", level, trainPosition));
+		if (ownHeadQuarters.getArmy().size() == 0 && ownHeadQuarters.getGold() > 21) {
+			final Position trainPosition = MapManager.MANAGER.getTrainArea();
+			builder.append(command(level, trainPosition));
+			ownHeadQuarters.addUnitToTrain(Unit.ghostTrain(1, trainPosition, AttackHeadQuartersStrategy.STRATEGY));
 		}
-
 		return builder.toString();
 	}
 }
