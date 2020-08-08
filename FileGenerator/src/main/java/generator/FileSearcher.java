@@ -6,17 +6,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Scanner;
 
-public final class SingleFileGenerator {
-
-	public static final void main(final String[] args) {
-		try {
-			run();
-			System.out.println("Sucess!!");
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
+public class FileSearcher {
 	private static final String sourceFolder = System.getProperty("user.home")
 			+ "\\Documents\\Work\\sources\\CodingGames\\";
 	private static final String javaProject = "src\\main\\java\\";
@@ -25,12 +15,10 @@ public final class SingleFileGenerator {
 	private static final String gameFolder = "game\\";
 
 	private static final String fileGenerator = "FileGenerator\\";
-	private static final String singleFileFolder = "\\generator\\output\\Player.txt";
+	private static final String singleFileFolder = "\\generated\\singleFile\\Player.txt";
 
-	private static final String defaultImport = "import java.util.*;\n" 
-			+ "import java.io.*;\n"
-			+ "import java.math.*;\n" 
-			+ "import static java.util.stream.Collectors.toList;";
+	private static final String defaultImport = "import java.util.*;\n" + "import java.io.*;\n"
+			+ "import java.math.*;\n" + "import static java.util.stream.Collectors.toList;";
 
 	/**
 	 * Concatena todas as classes da classesFolder num unico arquivo na
@@ -38,7 +26,7 @@ public final class SingleFileGenerator {
 	 *
 	 * @throws IOException
 	 */
-	private static void run() throws IOException {
+	private static void run(final String soruce, final String actualGame) throws IOException {
 		final File fout = new File(sourceFolder + fileGenerator + javaProject + singleFileFolder);
 		final PrintWriter pw = new PrintWriter(new FileWriter(fout));
 		pw.print(defaultImport);

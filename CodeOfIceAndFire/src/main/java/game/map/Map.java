@@ -20,7 +20,7 @@ final class Map {
 		return null;
 	}
 
-	Position getOpenSpace(final Position position) {
+	Position getOpenSpaceFromSpace(final Position position) {
 		if (map[position.getX() + 1][position.getY()] != '#') {
 			return Position.create(position.getX(), position.getY() + 1);
 		}

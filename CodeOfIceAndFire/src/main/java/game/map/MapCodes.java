@@ -1,5 +1,8 @@
 package game.map;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public enum MapCodes {
 	VOID('#'),
 	NEUTRAL('.'), 

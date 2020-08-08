@@ -37,7 +37,7 @@ public class MapManager {
 	}
 
 	public Position getOpenSpace(final Position position) {
-		return map.getOpenSpace(position);
+		return map.getPositionWithChar(MapCodes.NEUTRAL.getCode());
 	}
 
 }

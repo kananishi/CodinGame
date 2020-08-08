@@ -4,10 +4,10 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.List;
 
+import game.Position;
 import game.entities.HeadQuarters;
 import game.entities.HeadQuartersManager;
 import game.entities.Unit;
-import game.map.MapManager;
 import game.stategy.move.HoldTheHeadQuartersStrategy;
 
 public class DefendWhenEnemyIsCloseStrategy implements Train {
@@ -28,12 +28,28 @@ public class DefendWhenEnemyIsCloseStrategy implements Train {
 		}
 
 		if (ownHeadQuarters.getGold() > managerHQ.getLevelTrainCost(level)) {
-			builder.append(command("train", level, MapManager.MANAGER.getTrainArea()));
-			ownHeadQuarters.addUnitToTrain(
-					Unit.ghostTrain(level, MapManager.MANAGER.getTrainArea(), HoldTheHeadQuartersStrategy.STRATEGY));
+			final Position trainArea = closerToWichAcess(closeUnits);
+			builder.append(command("train", level, trainArea));
+			ownHeadQuarters.addUnitToTrain(Unit.ghostTrain(level, trainArea, HoldTheHeadQuartersStrategy.STRATEGY));
 		}
 
 		return builder.toString();
+	}
+
+	private Position closerToWichAcess(final List<Unit> units) {
+		final List<Position> gateway = HeadQuartersManager.MANAGER.getOwnHeadQuarters().getAcess();
+		Position closer = null;
+		int closerDistance = Integer.MAX_VALUE;
+		for (final Unit unit : units) {
+			for (final Position access : gateway) {
+				final int distance = unit.getCoordenates().distanceTo(access);
+				if (closerDistance > distance) {
+					closerDistance = distance;
+					closer = access;
+				}
+			}
+		}
+		return closer;
 	}
 
 }
