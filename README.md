@@ -1,3 +1,4 @@
-# CodeVsZumbies
+# Codin Game
+ - codes of codingame[https://www.codingame.com/] games
 
-https://www.codingame.com/multiplayer/optimization/code-vs-zombies
+

@@ -1,4 +1,4 @@
-package SingleFileGenerator.generator;
+package cg.tools.single.file.generator;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,6 +8,10 @@ import java.util.stream.Collectors;
 
 public class FileSearcher
 {
+	
+	private static final String javaProject = "src\\main\\java\\";
+    private static final String gameFolder = "game\\";
+
     /**
      * Concatena todas as classes da classesFolder num unico arquivo na
      * singleFileFolder
@@ -17,7 +21,8 @@ public class FileSearcher
     public static List<File> extractJavaFiles(
         final String directoryPath )
     {
-        final File dir = new File( directoryPath );
+    	final String gameDir = directoryPath + javaProject + gameFolder;
+        final File dir = new File( gameDir );
         return recursiveFilesSearch( dir );
     }
 

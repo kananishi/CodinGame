@@ -1,4 +1,4 @@
-package SingleFileGenerator.generator;
+package cg.tools.single.file.generator;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -55,6 +55,7 @@ public class FilePrinter
                         continue;
                     }
                     fout.println( line );
+                    fout.flush();
                 }
             }
             in.close();
